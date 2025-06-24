@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Event Booking Platform</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        body {
+          background-color: #fefaf6;
+          font-family: 'Segoe UI', sans-serif;
+          color: #333;
+          padding: 2rem;
+        }
+
+        h1 {
+          font-size: 1.8rem;
+          font-weight: 600;
+          color: #000;
+        }
+
+        h3 {
+          font-size: 1.2rem;
+          font-weight: 500;
+          color: #000;
+        }
+
+        .section {
+          background: #fff;
+          border-radius: 16px;
+          padding: 1.5rem;
+          margin-bottom: 2rem;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-control {
+          border-radius: 12px;
+          border: 1px solid #dcdcdc;
+        }
+
+        .btn {
+          border-radius: 12px;
+        }
+
+        .btn-create {
+          background-color: #a4d4ae;
+          border: none;
+          color: #fff;
+        }
+
+        .btn-create:hover {
+          background-color: #8bc89e;
+        }
+
+        .btn-refresh {
+          background-color: #ffd6a5;
+          border: none;
+          color: #000;
+        }
+
+        .btn-refresh:hover {
+          background-color: #ffc390;
+        }
+
+        .btn-book {
+          background-color: #bdb2ff;
+          border: none;
+          color: #fff;
+        }
+
+        .btn-book:hover {
+          background-color: #a99fe9;
+        }
+
+        .event-card {
+          background: #fdf0f0;
+          padding: 1rem 1.5rem;
+          border-radius: 15px;
+          margin-bottom: 1rem;
+          border-left: 8px solid #ffb5a7;
+        }
+
+        .alert {
+          border-radius: 10px;
+          font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="text-center mb-5">Event Booking Platform</h1>
+
+    <!-- Create Event -->
+    <div class="section">
+        <h3>Create New Event</h3>
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Event Name</label>
+                <input type="text" id="name" class="form-control" placeholder="Eg: Spring Boot Workshop" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Location</label>
+                <input type="text" id="location" class="form-control" placeholder="Eg: Bangalore" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Date</label>
+                <input type="date" id="date" class="form-control" />
+            </div>
+            <div class="col-md-1">
+                <button class="btn btn-create w-100" onclick="createNewEvent()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- List Events -->
+    <div class="section">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3>All Events</h3>
+            <button class="btn btn-refresh" onclick="loadEvents()">Refresh</button>
+        </div>
+        <div id="events"></div>
+    </div>
+
+    <!-- Book Event -->
+    <div class="section">
+        <h3>Book an Event</h3>
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Your Name</label>
+                <input type="text" id="userName" class="form-control" placeholder="Eg: Ankitha" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Event ID</label>
+                <input type="number" id="bookEventId" class="form-control" placeholder="Eg: 1" />
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-book w-100" onclick="bookEvent()">Book</button>
+            </div>
+        </div>
+        <div id="bookingResponse" class="mt-3"></div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const BASE_URL = "";
+
+    async function createNewEvent() {
+      const name = document.getElementById("name").value;
+      const location = document.getElementById("location").value;
+      const date = document.getElementById("date").value;
+
+      if (!name || !location || !date) {
+        alert("Please fill in all fields.");
+        return;
+      }
+
+      const response = await fetch(`${BASE_URL}/events`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, location, date }),
+      });
+
+      const result = await response.json();
+      alert("Event Created with ID: " + result.id);
+      loadEvents();
+    }
+
+    async function loadEvents() {
+      const response = await fetch(`${BASE_URL}/events`);
+      const events = await response.json();
+      const container = document.getElementById("events");
+      container.innerHTML = "";
+
+      if (events.length === 0) {
+        container.innerHTML = "<p class='text-muted'>No events available.</p>";
+        return;
+      }
+
+      events.forEach(event => {
+        const card = document.createElement("div");
+        card.className = "event-card";
+        card.innerHTML = `
+          <h5 class="text-danger">${event.name}</h5>
+          <p><strong>Location:</strong> ${event.location}</p>
+          <p><strong>Date:</strong> ${event.date}</p>
+          <p><strong>ID:</strong> ${event.id}</p>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    async function bookEvent() {
+      const userName = document.getElementById("userName").value;
+      const eventId = document.getElementById("bookEventId").value;
+
+      if (!userName || !eventId) {
+        alert("Please fill in both your name and event ID.");
+        return;
+      }
+
+      const response = await fetch(`${BASE_URL}/bookings?eventId=${eventId}&userName=${userName}`, {
+        method: "POST"
+      });
+
+      const div = document.getElementById("bookingResponse");
+
+      if (response.ok) {
+        const result = await response.json();
+        div.innerHTML = `
+          <div class="alert alert-success mt-3">
+            Booking confirmed for <strong>${result.userName}</strong> for "<strong>${result.event.name}</strong>".
+          </div>`;
+      } else {
+        div.innerHTML = `
+          <div class="alert alert-danger mt-3">
+            Booking failed. Make sure the event ID is correct.
+          </div>`;
+      }
+    }
+</script>
+</body>
+</html>
